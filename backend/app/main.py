@@ -11,7 +11,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.database import (
     close_mongo_connection,
     connect_to_mongo,
+    describe_mongodb_target,
+    get_environment,
     get_mongodb_db,
+    is_production,
     ping_mongo,
 )
 from app.routes.nin_verification import (
@@ -51,13 +54,33 @@ def get_cors_origins() -> list[str]:
 
 @asynccontextmanager
 async def lifespan(application: FastAPI):
-    connect_to_mongo()
-    if ping_mongo():
+    logger.info("Starting %s in %s mode", APP_NAME, get_environment())
+    try:
+        connect_to_mongo()
+        reachable = ping_mongo()
+    except RuntimeError:
+        reachable = False
+
+    if reachable:
         logger.info("MongoDB connected successfully (db=%s)", get_mongodb_db())
     else:
+        # describe_mongodb_target() is credential-free, so this is safe to log.
+        target = describe_mongodb_target()
+        if is_production():
+            logger.error(
+                "MongoDB is not reachable at %s (db=%s). Production requires a "
+                "working database, so startup is aborted. Verify that "
+                "MONGODB_URI is set correctly in the service environment.",
+                target,
+                get_mongodb_db(),
+            )
+            close_mongo_connection()
+            raise RuntimeError("MongoDB is not reachable in production")
         logger.warning(
-            "MongoDB is not reachable at %s - continuing without database",
-            os.getenv("MONGODB_URI", "mongodb://localhost:27017"),
+            "MongoDB is not reachable at %s (db=%s) - continuing without a "
+            "database (development mode).",
+            target,
+            get_mongodb_db(),
         )
     yield
     close_mongo_connection()
