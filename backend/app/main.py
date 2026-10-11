@@ -17,10 +17,12 @@ from app.database import (
     is_production,
     ping_mongo,
 )
+from app.routes.customers import router as customers_router
 from app.routes.nin_verification import (
     nin_validation_error_handler,
     router as nin_verification_router,
 )
+from app.routes.profile_pictures import router as profile_pictures_router
 from app.routes.service_providers import router as service_providers_router
 
 load_dotenv()
@@ -104,6 +106,12 @@ app.add_middleware(
 
 # Service Provider (Artisan) routes: /api/providers
 app.include_router(service_providers_router)
+
+# Customer routes: /api/customers
+app.include_router(customers_router)
+
+# Profile picture upload/remove routes: /api/profile-pictures
+app.include_router(profile_pictures_router)
 
 # NIN verification routes: /api/nin-verification
 app.include_router(nin_verification_router)

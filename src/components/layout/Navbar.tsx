@@ -4,6 +4,12 @@ import { routePaths, getDashboardPath } from "../../constants/routes";
 import { useAuth } from "../../state/AuthContext";
 import { Button } from "../ui/Button";
 import { Icon } from "../ui/Icon";
+import { Avatar } from "../ui/Avatar";
+
+function initialsFor(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean).slice(0, 2);
+  return parts.map((part) => part[0]?.toUpperCase() ?? "").join("") || "?";
+}
 
 export function Navbar() {
   const { user, logout } = useAuth();
@@ -77,7 +83,15 @@ export function Navbar() {
           </button>
           {user ? (
             <>
-              <Link className="navbar__welcome" to={dashboardPath}>{user.name.split(" ")[0]}</Link>
+              <Link className="navbar__welcome" to={dashboardPath}>
+                <Avatar
+                  initials={initialsFor(user.name)}
+                  size="small"
+                  image={user.profileImage}
+                  alt={`${user.name} profile picture`}
+                />
+                {user.name.split(" ")[0]}
+              </Link>
               <Button variant="ghost" size="sm" onClick={handleLogout} disabled={loggingOut}>{loggingOut ? "Logging out..." : "Log out"}</Button>
             </>
           ) : (

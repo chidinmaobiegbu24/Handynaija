@@ -1,4 +1,3 @@
-import type { User } from "../types";
 import { apiRequest } from "./api/client";
 
 export type BackendVerificationStatus = "pending" | "verified" | "rejected" | "failed";
@@ -22,10 +21,6 @@ export interface NINVerificationStatus {
   rejection_reason: string | null;
 }
 
-export interface BackendProvider {
-  id: string;
-}
-
 export const NIN_VERIFICATION_ENDPOINT = "/api/nin-verification";
 
 export function providerVerificationEndpoint(providerId: string) {
@@ -33,44 +28,6 @@ export function providerVerificationEndpoint(providerId: string) {
 }
 
 export const identityVerificationService = {
-  /**
-   * Link the signed-in provider to a backend provider profile.
-   *
-   * The demo frontend stores users only in the browser, so the backend has no
-   * provider id for them yet. The first time a provider verifies their
-   * identity, this creates the provider record through the existing
-   * POST /api/providers endpoint and returns the new MongoDB id. Later
-   * submissions reuse the stored id instead of creating duplicates.
-   */
-  async autoRegisterProvider(user: User): Promise<string> {
-    const email = user.email?.trim() ?? "";
-    const phone = user.phone?.trim() ?? "";
-    if (!email || !phone) {
-      throw new Error(
-        "Your account is missing the contact details needed to link a provider profile. Update your email and phone, then try again.",
-      );
-    }
-
-    const provider = await apiRequest<BackendProvider>("/api/providers", {
-      method: "POST",
-      body: JSON.stringify({
-        full_name: user.name,
-        phone,
-        email,
-        service_category: user.professionalProfile?.categoryId ?? "General Services",
-        skills: [],
-        description: user.professionalProfile?.description ?? "",
-        location: user.location?.city || user.location?.state || "",
-        state: user.location?.state || "",
-        years_of_experience: user.professionalProfile?.yearsExperience ?? 0,
-        price: 0,
-        availability: "Available",
-        profile_image: "",
-      }),
-    });
-
-    return provider.id;
-  },
 
   /**
    * Submit a NIN verification request to the backend.

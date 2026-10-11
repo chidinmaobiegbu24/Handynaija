@@ -1,13 +1,20 @@
 import { Link } from "react-router-dom";
 import { IdentityVerificationCard } from "../components/account/IdentityVerificationCard";
+import { Avatar } from "../components/ui/Avatar";
 import { StatusBadge } from "../components/ui/StatusBadge";
 import { providers } from "../data/mockData";
+import { serviceCategories } from "../data/mockData";
 import { requestService } from "../services/requestService";
 import { useAuth } from "../state/AuthContext";
 import { useEffect, useMemo, useState } from "react";
 import type { ServiceRequest } from "../types";
 
 const providerPreview = providers[0];
+
+function initialsFor(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean).slice(0, 2);
+  return parts.map((part) => part[0]?.toUpperCase() ?? "").join("") || "?";
+}
 
 function formatDate(date: string) {
   return new Intl.DateTimeFormat("en-NG", { dateStyle: "medium" }).format(new Date(`${date}T00:00:00`));
@@ -40,14 +47,34 @@ export function ProviderDashboardPage() {
 
   const recentRequests = requests.slice(0, 3);
 
+  const categoryId = user?.professionalProfile?.categoryId ?? "";
+  const category = serviceCategories.find((item) => item.id === categoryId);
+  const businessName = user?.businessName ?? user?.name ?? "Your business";
+  const profession = category?.name ?? "Service provider";
+  const description = user?.professionalProfile?.description
+    ?? "Add a short description of your work so customers know what to expect.";
+  const profileLocation = user?.location
+    ? [user.location.area, user.location.city, user.location.state].filter(Boolean).join(", ") || user.location.state
+    : "Not set";
+
   return (
     <section className="page-section">
       <div className="container">
-        <p className="eyebrow">provider workspace</p>
-        <h1 className="page-title">Welcome back, {user?.name.split(" ")[0] ?? "provider"}.</h1>
-        <p className="page-lede">Stay on top of your new requests, your schedule and your recent customer activity.</p>
+        <div className="dashboard-greeting">
+        <Avatar
+          initials={initialsFor(user?.name ?? "?")}
+          size="large"
+          image={user?.profileImage}
+          alt={`${user?.name ?? "Your"} profile picture`}
+        />
+        <div>
+          <p className="eyebrow">provider workspace</p>
+          <h1 className="page-title">Welcome back, {user?.name.split(" ")[0] ?? "provider"}.</h1>
+        </div>
+      </div>
+      <p className="page-lede">Stay on top of your new requests, your schedule and your recent customer activity.</p>
 
-        <IdentityVerificationCard status={user?.verificationStatus} source={user?.verificationSource} provider />
+      <IdentityVerificationCard status={user?.verificationStatus} source={user?.verificationSource} provider />
 
         <div className="dashboard-stats">
           <div className="dashboard-stat">
@@ -140,16 +167,16 @@ export function ProviderDashboardPage() {
         <div className="recommendation-grid">
           <article className="recommendation-card">
             <div className="recommendation-card__top">
-              <div className="avatar avatar--small">{providerPreview.initials}</div>
+              <Avatar initials={initialsFor(businessName)} size="small" image={user?.profileImage} alt={`${businessName} profile picture`} />
               <div>
-                <h3>{providerPreview.businessName}</h3>
-                <p>{providerPreview.profession}</p>
+                <h3>{businessName}</h3>
+                <p>{profession}</p>
               </div>
             </div>
-            <p>{providerPreview.description}</p>
+            <p>{description}</p>
             <div className="recommendation-card__meta">
-              <span>⭐ {providerPreview.rating}</span>
-              <span>{providerPreview.location.city}</span>
+              <span>{user?.providerId ? "Linked to your profile" : "Demo account — no photo yet"}</span>
+              <span>{profileLocation}</span>
             </div>
             <Link className="text-link" to="/provider/profile">Edit profile →</Link>
           </article>

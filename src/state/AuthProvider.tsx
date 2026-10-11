@@ -56,6 +56,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             }
           : current);
       },
+      updateUser(patch: Partial<User>) {
+        setUser((current) => (current ? { ...current, ...patch } : current));
+      },
       async logout() {
         localStorage.removeItem(MOCK_AUTH_STORAGE_KEY);
         sessionStorage.removeItem(MOCK_AUTH_SESSION_KEY);

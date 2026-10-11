@@ -18,6 +18,9 @@ export function ProviderCard({ provider, featured = false }: { provider: Provide
       ? provider.verified || provider.verificationStatus === "verified"
       : provider.verificationStatus === "verified"
   );
+  const photoSrc = provider.profileImage || `/images/provider-${provider.id}.webp`;
+  const locationLabel = [provider.location.area, provider.location.city, provider.location.state]
+    .filter(Boolean).join(", ") || "Nigeria";
 
   return (
     <article className={`provider-card provider-card--result${featured ? " provider-card--featured" : ""}`}>
@@ -26,7 +29,7 @@ export function ProviderCard({ provider, featured = false }: { provider: Provide
           {!photoFailed ? (
             <img
               className="provider-card__photo"
-              src={`/images/provider-${provider.id}.webp`}
+              src={photoSrc}
               alt={provider.businessName ?? provider.name}
               loading="lazy"
               onError={() => setPhotoFailed(true)}
@@ -47,7 +50,7 @@ export function ProviderCard({ provider, featured = false }: { provider: Provide
             {!photoFailed ? (
               <img
                 className="provider-card__portrait-photo"
-                src={`/images/provider-${provider.id}.webp`}
+                src={photoSrc}
                 alt={`${provider.name}, ${provider.profession}`}
                 loading="lazy"
                 onError={() => setPhotoFailed(true)}
@@ -73,7 +76,7 @@ export function ProviderCard({ provider, featured = false }: { provider: Provide
       <h3>{provider.businessName ?? provider.name}</h3>
       {!featured && provider.businessName && <p className="provider-card__owner">Provider: {provider.name}</p>}
       <p className="provider-card__location">
-        <Icon name="pin" size={13} aria-hidden="true" /> {provider.location.area}, {provider.location.city}, {provider.location.state}
+        <Icon name="pin" size={13} aria-hidden="true" /> {locationLabel}
       </p>
       <div className="provider-card__details">
         <span><Icon name={serviceIcon(provider.categoryId)} size={13} aria-hidden="true" /> {category?.name ?? provider.profession}</span>

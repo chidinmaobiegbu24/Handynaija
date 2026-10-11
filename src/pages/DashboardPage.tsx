@@ -1,11 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { IdentityVerificationCard } from "../components/account/IdentityVerificationCard";
+import { Avatar } from "../components/ui/Avatar";
 import { StatusBadge } from "../components/ui/StatusBadge";
 import { providers } from "../data/mockData";
 import { requestService } from "../services/requestService";
 import { useAuth } from "../state/AuthContext";
 import type { ServiceRequest } from "../types";
+
+function initialsFor(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean).slice(0, 2);
+  return parts.map((part) => part[0]?.toUpperCase() ?? "").join("") || "?";
+}
 
 function formatDisplayDate(date: string) {
   return new Intl.DateTimeFormat("en-NG", { dateStyle: "medium" }).format(new Date(`${date}T00:00:00`));
@@ -46,11 +52,21 @@ export function DashboardPage() {
   return (
     <section className="page-section">
       <div className="container">
-        <p className="eyebrow">{user?.role.toLowerCase()} space</p>
-        <h1 className="page-title">Good day, {user?.name.split(" ")[0]}.</h1>
-        <p className="page-lede">Here’s a quick overview of your HandyNaija activity and progress.</p>
+        <div className="dashboard-greeting">
+        <Avatar
+          initials={initialsFor(user?.name ?? "?")}
+          size="large"
+          image={user?.profileImage}
+          alt={`${user?.name ?? "Your"} profile picture`}
+        />
+        <div>
+          <p className="eyebrow">{user?.role.toLowerCase()} space</p>
+          <h1 className="page-title">Good day, {user?.name.split(" ")[0]}.</h1>
+        </div>
+      </div>
+      <p className="page-lede">Here’s a quick overview of your HandyNaija activity and progress.</p>
 
-        <IdentityVerificationCard status={user?.verificationStatus} source={user?.verificationSource} />
+      <IdentityVerificationCard status={user?.verificationStatus} source={user?.verificationSource} />
 
         <div className="dashboard-stats">
           <div className="dashboard-stat">

@@ -10,10 +10,12 @@ from pymongo.errors import PyMongoError
 from app.models.service_provider import (
     PROVIDER_FIELDS,
     get_provider_collection,
+    new_profile_image_token,
     serialize_provider,
 )
 from app.schemas.service_provider import (
     ServiceProviderCreate,
+    ServiceProviderCreated,
     ServiceProviderOut,
     ServiceProviderUpdate,
 )
@@ -56,7 +58,7 @@ def _ignore_case(value: str) -> dict:
     return {"$regex": f"^{re.escape(value.strip())}$", "$options": "i"}
 
 
-@router.post("/api/providers", status_code=201, response_model=ServiceProviderOut)
+@router.post("/api/providers", status_code=201, response_model=ServiceProviderCreated)
 def create_provider(payload: ServiceProviderCreate):
     """Register a new service provider."""
     data = payload.model_dump()
@@ -64,11 +66,19 @@ def create_provider(payload: ServiceProviderCreate):
     # Every provider gets a creation time and a unique MongoDB ObjectId.
     data["created_at"] = datetime.now(timezone.utc)
 
+    # Only fields that belong to a provider are saved.
+    data = {key: value for key, value in data.items() if key in PROVIDER_FIELDS}
+
+    # A fresh ownership secret for future uploads. It is stored but never
+    # included in PROVIDER_FIELDS, so public responses cannot leak it.
+    data["profile_image_token"] = new_profile_image_token()
+
     # insert_one() generates the unique _id (ObjectId) for us.
     result = _run(lambda: get_provider_collection().insert_one(data))
     data["_id"] = result.inserted_id
 
-    return serialize_provider(data)
+    # The token is returned exactly once, in this create response.
+    return {**serialize_provider(data), "profile_image_token": data["profile_image_token"]}
 
 
 @router.get("/api/providers", response_model=list[ServiceProviderOut])

@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Badge } from "../components/ui/Badge";
 import { Button } from "../components/ui/Button";
 import { routePaths } from "../constants/routes";
+import { ensureBackendProvider } from "../services/backendAccountService";
 import {
   identityVerificationService,
   toFrontendStatus,
@@ -11,7 +12,7 @@ import { useAuth } from "../state/AuthContext";
 import type { VerificationStatus } from "../types";
 
 export function IdentityVerificationPage() {
-  const { user, updateVerificationStatus } = useAuth();
+  const { user, updateUser, updateVerificationStatus } = useAuth();
   const [nin, setNin] = useState("");
   const [status, setStatus] = useState<VerificationStatus>(user?.verificationStatus ?? "not_verified");
   const [verificationReference, setVerificationReference] = useState("");
@@ -67,11 +68,14 @@ export function IdentityVerificationPage() {
       }
 
       let providerId = user.providerId ?? "";
+      let profileImageToken = user.profileImageToken ?? "";
       if (!providerId) {
         if (user.role !== "PROVIDER") {
           throw new Error("Identity verification is currently available for service-provider accounts only.");
         }
-        providerId = await identityVerificationService.autoRegisterProvider(user);
+        const account = await ensureBackendProvider(user);
+        providerId = account.providerId;
+        profileImageToken = account.profileImageToken;
       }
 
       const result = await identityVerificationService.submitVerification(submittedNin, providerId);
@@ -79,6 +83,12 @@ export function IdentityVerificationPage() {
       setStatus(nextStatus);
       setVerificationReference(result.verification_reference);
       updateVerificationStatus(nextStatus, "backend", providerId);
+      // Persist the provider link and its upload ownership token with the user,
+      // so later profile-picture uploads reuse the same backend record.
+      updateUser({
+        providerId,
+        ...(profileImageToken ? { profileImageToken } : {}),
+      });
     } catch (verificationError) {
       setError(
         verificationError instanceof Error

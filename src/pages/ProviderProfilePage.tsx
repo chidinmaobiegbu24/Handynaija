@@ -92,6 +92,9 @@ export function ProviderProfilePage() {
   }));
   const reviewTotal = reviews.length;
   const providerName = provider.businessName ?? provider.name;
+  const providerLocation = [provider.location.area, provider.location.city, provider.location.state]
+    .filter(Boolean).join(", ");
+  const providerState = provider.location.state || "";
 
   return (
     <section className="page-section provider-profile-page">
@@ -104,7 +107,7 @@ export function ProviderProfilePage() {
         <div className="profile-layout">
           <article className="profile-card provider-profile">
             <header className="provider-profile__header">
-              <Avatar initials={provider.initials} size="large" label={`${provider.name} profile avatar`} />
+              <Avatar initials={provider.initials} size="large" image={provider.profileImage} label={`${provider.name} profile avatar`} />
               <div className="provider-profile__identity">
                 <div className="provider-profile__badges">
                   {category && <Badge>{category.name}</Badge>}
@@ -115,7 +118,7 @@ export function ProviderProfilePage() {
                 {provider.businessName && <p className="provider-profile__business">{provider.businessName}</p>}
                 <p className="provider-profile__profession">{provider.profession}</p>
                 <p className="provider-profile__location">
-                  <span aria-hidden="true">⌖</span> {provider.location.area}, {provider.location.city}, {provider.location.state} State
+                  <span aria-hidden="true">⌖</span> {providerLocation}{providerState && " State"}
                 </p>
               </div>
             </header>

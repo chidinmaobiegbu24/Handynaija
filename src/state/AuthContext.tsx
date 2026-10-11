@@ -8,6 +8,8 @@ export interface AuthContextValue {
   registerCustomer: (input: CustomerRegistration) => Promise<void>;
   registerProvider: (input: ProviderRegistration) => Promise<void>;
   updateVerificationStatus: (status: VerificationStatus, source: VerificationSource, providerId?: string) => void;
+  /** Merge fields into the signed-in demo user (e.g. a linked backend id or picture). */
+  updateUser: (patch: Partial<User>) => void;
   logout: () => Promise<void>;
 }
 

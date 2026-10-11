@@ -13,6 +13,7 @@ import { PlaceholderPage } from "./pages/PlaceholderPage";
 import { ProfilePage } from "./pages/ProfilePage";
 import { ProviderProfilePage } from "./pages/ProviderProfilePage";
 import { ProviderDashboardPage } from "./pages/ProviderDashboardPage";
+import { ProviderProfileManagementPage } from "./pages/ProviderProfileManagementPage";
 import { ProvidersPage } from "./pages/ProvidersPage";
 import { RegisterPage } from "./pages/RegisterPage";
 import { RequestServicePage } from "./pages/RequestServicePage";
@@ -27,7 +28,6 @@ const providerRoutes = [
   { path: "/provider/services", title: "Your services" },
   { path: "/provider/availability", title: "Manage availability" },
   { path: "/provider/messages", title: "Messages" },
-  { path: "/provider/profile", title: "Professional profile" },
   { path: "/provider/reviews", title: "Your reviews" },
 ];
 
@@ -84,6 +84,14 @@ export function App() {
           element={
             <ProtectedRoute allowedRoles={["PROVIDER"]}>
               <ProviderDashboardPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/provider/profile"
+          element={
+            <ProtectedRoute allowedRoles={["PROVIDER"]}>
+              <ProviderProfileManagementPage />
             </ProtectedRoute>
           }
         />

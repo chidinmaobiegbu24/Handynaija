@@ -40,6 +40,11 @@ class ServiceProviderBase(BaseModel):
     price: float = Field(default=0.0, ge=0, description="Price in Naira")
     availability: str = Field(default="Available", max_length=50)
     profile_image: str = Field(default="", max_length=500)
+    profile_image_public_id: str = Field(default="", max_length=300)
+    profile_image_width: int | None = Field(default=None, ge=0)
+    profile_image_height: int | None = Field(default=None, ge=0)
+    profile_image_format: str = Field(default="", max_length=20)
+    profile_image_bytes: int | None = Field(default=None, ge=0)
 
     model_config = {"json_schema_extra": {"example": PROVIDER_EXAMPLE}}
 
@@ -67,3 +72,16 @@ class ServiceProviderOut(ServiceProviderBase):
 
     id: str = Field(..., description="MongoDB ObjectId returned as a string")
     created_at: datetime = Field(..., description="When the provider was registered")
+
+
+class ServiceProviderCreated(ServiceProviderOut):
+    """The create response: normal provider data plus the ownership token.
+
+    The token is shown exactly once (right after registration) so the client
+    can prove it owns this provider record later, e.g. when uploading a
+    profile picture. It is stored server-side but never serialized again.
+    """
+
+    profile_image_token: str = Field(
+        ..., description="One-time ownership secret for this provider record"
+    )

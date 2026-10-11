@@ -22,8 +22,10 @@ from fastapi.testclient import TestClient
 
 import app.database as database
 import app.main as main
+import app.models.customer as customer_model
 import app.models.nin_verification as nin_model
 import app.models.service_provider as provider_model
+from app.models.customer import get_customer_collection
 from app.models.nin_verification import get_nin_collection
 from app.models.service_provider import get_provider_collection
 
@@ -44,6 +46,7 @@ def client():
         "main.ping_mongo": main.ping_mongo,
         "nin.get_database": nin_model.get_database,
         "provider.get_database": provider_model.get_database,
+        "customer.get_database": customer_model.get_database,
     }
 
     try:
@@ -52,6 +55,7 @@ def client():
         main.ping_mongo = lambda: True
         nin_model.get_database = lambda: db
         provider_model.get_database = lambda: db
+        customer_model.get_database = lambda: db
 
         with TestClient(main.app) as test_client:
             yield test_client
@@ -63,6 +67,7 @@ def client():
                 "main": main,
                 "nin": nin_model,
                 "provider": provider_model,
+                "customer": customer_model,
             }
             targets[namespace].__dict__[name] = value
 
@@ -72,9 +77,11 @@ def clean_mock_db():
     """Start and finish every test with empty collections."""
     get_nin_collection().delete_many({})
     get_provider_collection().delete_many({})
+    get_customer_collection().delete_many({})
     yield
     get_nin_collection().delete_many({})
     get_provider_collection().delete_many({})
+    get_customer_collection().delete_many({})
 
 
 def create_provider(client: TestClient) -> str:
@@ -98,12 +105,60 @@ def create_provider(client: TestClient) -> str:
     return response.json()["id"]
 
 
+def create_provider_with_token(client: TestClient) -> tuple[str, str]:
+    """Register a provider and return (id, profile_image_token)."""
+    payload = {
+        "full_name": "Test Artisan",
+        "phone": "08012345678",
+        "email": "artisan@example.com",
+        "service_category": "Electrician",
+        "skills": ["Wiring", "Installation"],
+        "description": "Dummy provider used only by automated tests.",
+        "location": "Lagos",
+        "state": "Lagos",
+        "years_of_experience": 5,
+        "price": 5000.0,
+        "availability": "Available",
+        "profile_image": "",
+    }
+    response = client.post("/api/providers", json=payload)
+    assert response.status_code == 201, response.text
+    body = response.json()
+    return body["id"], body["profile_image_token"]
+
+
+def create_customer_with_token(client: TestClient) -> tuple[str, str]:
+    """Register a dummy customer and return (id, profile_image_token)."""
+    payload = {
+        "full_name": "Test Customer",
+        "phone": "08098765432",
+        "email": "customer@example.com",
+        "location": "Ikeja",
+        "state": "Lagos",
+        "profile_image": "",
+    }
+    response = client.post("/api/customers", json=payload)
+    assert response.status_code == 201, response.text
+    body = response.json()
+    return body["id"], body["profile_image_token"]
+
+
 @pytest.fixture
 def new_provider(client):
     """Callable fixture that registers a dummy provider and returns its id."""
 
     def _register() -> str:
         return create_provider(client)
+
+    return _register
+
+
+@pytest.fixture
+def new_customer(client):
+    """Callable fixture that registers a dummy customer and returns (id, token)."""
+
+    def _register():
+        return create_customer_with_token(client)
 
     return _register
 
